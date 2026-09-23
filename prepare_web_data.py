@@ -1,58 +1,111 @@
-import pandas as pd
-import json
 from pathlib import Path
+import json
+import shutil
 
-DATA = Path("data")
-OUT = Path("web_data")
+import pandas as pd
 
-OUT.mkdir(exist_ok=True)
 
-nodes = pd.read_parquet(DATA / "nodes.parquet")
-edges = pd.read_parquet(DATA / "edges.parquet")
-transactions = pd.read_parquet(DATA / "transactions.parquet")
+ROOT = Path(__file__).resolve().parent
 
-# Большие ID обязательно превращаем в строки для JavaScript
-if "gid" in nodes.columns:
-    nodes["gid"] = nodes["gid"].astype(str)
+BACKEND = ROOT / "backend"
+FRONTEND = ROOT / "frontend"
 
-for col in ["src", "dst"]:
-    if col in edges.columns:
-        edges[col] = edges[col].astype(str)
+BACKEND_DATA = BACKEND / "data"
+BACKEND_OUTPUT = BACKEND / "output"
 
-    if col in transactions.columns:
-        transactions[col] = transactions[col].astype(str)
+FRONTEND_DATA = FRONTEND / "public" / "data"
 
-# Даты тоже делаем строками
-if "date" in transactions.columns:
-    transactions["date"] = transactions["date"].astype(str)
+FRONTEND_DATA.mkdir(parents=True, exist_ok=True)
 
-nodes.to_json(
-    OUT / "nodes.json",
-    orient="records",
-    force_ascii=False,
-    indent=2
+
+# =========================
+# COPY BACKEND OUTPUT
+# =========================
+
+graph_source = BACKEND_OUTPUT / "graph.json"
+report_source = BACKEND_OUTPUT / "report.json"
+
+graph_target = FRONTEND_DATA / "graph.json"
+report_target = FRONTEND_DATA / "report.json"
+
+if not graph_source.exists():
+    raise FileNotFoundError(
+        f"Не найден {graph_source}. Сначала запусти backend/main.py"
+    )
+
+if not report_source.exists():
+    raise FileNotFoundError(
+        f"Не найден {report_source}. Сначала запусти backend/main.py"
+    )
+
+shutil.copy2(graph_source, graph_target)
+shutil.copy2(report_source, report_target)
+
+
+# =========================
+# TRANSACTIONS
+# =========================
+
+transactions_path = BACKEND_DATA / "transactions.parquet"
+
+if not transactions_path.exists():
+    raise FileNotFoundError(
+        f"Не найден {transactions_path}"
+    )
+
+transactions = pd.read_parquet(transactions_path)
+
+transactions["src"] = transactions["src"].astype(str)
+transactions["dst"] = transactions["dst"].astype(str)
+
+transactions["date"] = (
+    pd.to_datetime(transactions["date"])
+    .dt.strftime("%Y-%m-%d")
 )
 
-edges.to_json(
-    OUT / "edges.json",
-    orient="records",
-    force_ascii=False,
-    indent=2
+transactions["sum_kzt"] = (
+    transactions["sum_kzt"]
+    .astype(float)
 )
 
-transactions.to_json(
-    OUT / "transactions.json",
-    orient="records",
-    force_ascii=False,
-    indent=2
+transactions_records = transactions.to_dict(
+    orient="records"
 )
 
-print("Готово!")
-print("Nodes:", len(nodes))
-print("Edges:", len(edges))
-print("Transactions:", len(transactions))
+with open(
+    FRONTEND_DATA / "transactions.json",
+    "w",
+    encoding="utf-8",
+) as f:
+    json.dump(
+        transactions_records,
+        f,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+# =========================
+# INFO
+# =========================
+
+with open(
+    graph_target,
+    "r",
+    encoding="utf-8",
+) as f:
+    graph = json.load(f)
+
+print("Frontend data prepared successfully.")
 print()
-print("Созданы:")
-print("web_data/nodes.json")
-print("web_data/edges.json")
-print("web_data/transactions.json")
+print("Graph:")
+print(" Nodes:", len(graph.get("nodes", [])))
+print(" Edges:", len(graph.get("edges", [])))
+print(" Clusters:", len(graph.get("clusters", [])))
+print(" Top nodes:", len(graph.get("top_nodes", [])))
+print(" Transactions:", len(transactions))
+print()
+print("Created:")
+print(graph_target)
+print(report_target)
+print(FRONTEND_DATA / "transactions.json")

@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "nodes": 2248,
+  "edges": 3119,
+  "transactions": 4840,
+  "seed_count": 81,
+  "boundary_count": 444,
+  "isolated_count": 19,
+  "components_including_isolates": 35,
+  "components_with_edges": 16,
+  "clusters": 91,
+  "total_kzt": 365890012.01,
+  "self_loop_edges": 0,
+  "period_start": "2026-07-01",
+  "period_end": "2026-07-31",
+  "role_counts": {
+    "terminal": 1084,
+    "peripheral": 831,
+    "consolidator": 152,
+    "distributor": 112,
+    "transit": 53,
+    "coordinator": 16
+  },
+  "betweenness_mode": "exact_unweighted_directed",
+  "config": {
+    "max_depth": 4,
+    "random_seed": 42,
+    "louvain_resolution": 1.0,
+    "consolidator_min_senders": 3,
+    "distributor_min_receivers": 5,
+    "transit_ratio_min": 0.8,
+    "transit_ratio_max": 1.2,
+    "terminal_ratio_max": 0.1,
+    "fast_window_days": 2,
+    "coordinator_betweenness_percentile": 0.9,
+    "boundary_role_cap": 0.7,
+    "boundary_priority_factor": 0.9
+  },
+  "limitations": [
+    "Роли — гипотезы для проверки, не утверждения о виновности.",
+    "Скоры — значения эвристик, не вероятности; размеченных ролей нет.",
+    "Видны только отобранные внутрибанковские переводы за период, не полный баланс.",
+    "Исходящие depth=4 обрезаны; такие узлы не классифицируются как terminal.",
+    "У seed неполные входящие; соотношение сумм не используется для их transit/terminal.",
+    "Достижимость от seed не доказывает прохождение конкретных денег по маршруту.",
+    "Сопоставление за 0–2 дня — временная совместимость, не трассировка денег; порядок внутри дня неизвестен.",
+    "Операции ниже 5000 KZT и внешние переводы могут отсутствовать в исходной выборке."
+  ],
+  "warnings": [
+    "97 совпадающих строк транзакций сохранены: без transaction_id нельзя считать их ошибочными дублями."
+  ],
+  "versions": {
+    "python": "3.13.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "networkx": "3.7"
+  },
+  "analysis_seconds": 2.524,
+  "input_sha256": {
+    "nodes.parquet": "d2a45b0df6e9352832d5fb09839d10b9e23f898156c3bab263b051b31cc0296d",
+    "edges.parquet": "4e71dde5cd3115bcb26e91202665532ee6581cf8233a9fc8059ea59fb7358a38",
+    "transactions.parquet": "c30c5317b5439591dde86f2058dc47a3d19b2900c055ded994fe547f6fb7e7da"
+  }
+}
